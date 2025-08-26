@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudySet - A Quizlet Clone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .star-btn.starred svg {
+            fill: #facc15; /* yellow-400 */
+            stroke: #facc15; /* yellow-400 */
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-900">StudySet</h1>
+            <p class="text-slate-500 mt-2">Create your flashcards and master them with Learn Mode.</p>
+        </header>
+
+        <!-- Main content area -->
+        <main id="mainContent">
+
+            <!-- Set Management Section -->
+            <section id="setManagementSection" class="bg-white p-6 rounded-xl shadow-md mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Your Study Sets</h2>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <select id="setSelector" class="w-full sm:w-1/2 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"></select>
+                    <input type="text" id="newSetName" placeholder="New set name..." class="w-full sm:w-1/2 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <button id="addSetBtn" class="bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-700">Add Set</button>
+                    <button id="deleteSetBtn" class="bg-red-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-red-600">Delete Set</button>
+                </div>
+            </section>
+
+            <!-- Card Creation Section -->
+            <section id="creationSection" class="bg-white p-6 rounded-xl shadow-md mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Add Cards to "<span id="currentSetName" class="text-indigo-600"></span>"</h2>
+                <form id="cardForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="col-span-1">
+                        <label for="termInput" class="block text-sm font-medium text-slate-600 mb-1">Term</label>
+                        <input type="text" id="termInput" placeholder="e.g., Photosynthesis" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+                    <div class="col-span-1">
+                        <label for="definitionInput" class="block text-sm font-medium text-slate-600 mb-1">Definition</label>
+                        <input type="text" id="definitionInput" placeholder="e.g., Process plants use to convert light energy..." class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+                    <div class="col-span-1 md:col-span-2">
+                        <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
+                            Add Card
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Card List Section -->
+            <section id="cardListSection" class="mb-8">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                    <h2 class="text-2xl font-semibold">Your Cards (<span id="cardCount">0</span>)</h2>
+                    <div class="flex items-center gap-2 flex-wrap">
+                         <button id="shuffleBtn" class="bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 transition disabled:bg-slate-300 disabled:cursor-not-allowed" disabled>Shuffle</button>
+                         <button id="studyStarredBtn" class="bg-yellow-400 text-yellow-900 font-semibold py-2 px-4 rounded-lg hover:bg-yellow-500 transition disabled:bg-yellow-200 disabled:cursor-not-allowed" disabled>Study Starred</button>
+                        <button id="startLearnBtn" class="bg-green-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-green-600 transition disabled:bg-slate-300 disabled:cursor-not-allowed" disabled>
+                            Start Learning
+                        </button>
+                    </div>
+                </div>
+                 <div class="flex items-center gap-2 mb-4">
+                    <input type="checkbox" id="autoSpeakToggle" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                    <label for="autoSpeakToggle" class="text-sm text-slate-600">Auto-speak questions</label>
+                </div>
+                <div id="cardList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Cards will be dynamically inserted here -->
+                </div>
+            </section>
+
+            <!-- Learn Mode Section (Initially Hidden) -->
+            <section id="learnSection" class="hidden bg-white p-6 rounded-xl shadow-md">
+                 <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold">Learn Mode</h2>
+                    <button id="exitLearnBtn" class="text-sm bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 transition">Exit</button>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="mb-4">
+                    <div class="flex justify-between mb-1">
+                        <span class="text-base font-medium text-slate-700">Progress</span>
+                        <span id="progressText" class="text-sm font-medium text-slate-700">0 / 0</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5">
+                        <div id="progressBar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div id="learnContent">
+                    <!-- Question (Definition) -->
+                    <div class="bg-slate-100 p-6 rounded-lg mb-6 min-h-[120px] flex items-center justify-center relative">
+                        <p id="questionText" class="text-center text-lg mr-10"></p>
+                        <button id="speakBtn" class="absolute top-3 right-3 text-slate-500 hover:text-indigo-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- Answer Options -->
+                    <div id="answerOptions" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+
+                <!-- Feedback Section (for incorrect answers) -->
+                <div id="feedbackSection" class="hidden mt-6 p-4 rounded-lg text-center">
+                    <h3 id="feedbackTitle" class="text-xl font-bold"></h3>
+                    <p id="feedbackText" class="mt-1"></p>
+                    <button id="nextQuestionBtn" class="mt-4 bg-indigo-600 text-white font-semibold py-2 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Next</button>
+                </div>
+                
+                <!-- Summary Screen -->
+                <div id="summaryScreen" class="hidden text-center py-8">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2">Batch Complete!</h2>
+                    <p class="text-slate-600 mb-6">Here's your progress on the last 10 questions.</p>
+                    <div id="summaryStats" class="flex justify-center gap-8 mb-6">
+                        <div><span id="summaryCorrect" class="text-3xl font-bold text-green-500"></span><p>Correct</p></div>
+                        <div><span id="summaryMissed" class="text-3xl font-bold text-red-500"></span><p>Missed</p></div>
+                    </div>
+                    <div id="summaryList" class="text-left mb-6"></div>
+                    <button id="continueBtn" class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700">Continue Learning</button>
+                </div>
+
+                <!-- Completion Screen -->
+                <div id="completionScreen" class="hidden text-center py-8">
+                    <h2 class="text-3xl font-bold text-green-500 mb-4">Congratulations!</h2>
+                    <p class="text-lg text-slate-600 mb-6">You've mastered all the cards in this set.</p>
+                    <button id="restartLearnBtn" class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700">Restart Session</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const setSelector = document.getElementById('setSelector');
+            const newSetName = document.getElementById('newSetName');
+            const addSetBtn = document.getElementById('addSetBtn');
+            const deleteSetBtn = document.getElementById('deleteSetBtn');
+            const currentSetName = document.getElementById('currentSetName');
+
+            const cardForm = document.getElementById('cardForm');
+            const termInput = document.getElementById('termInput');
+            const definitionInput = document.getElementById('definitionInput');
+            const cardList = document.getElementById('cardList');
+            const cardCount = document.getElementById('cardCount');
+            const startLearnBtn = document.getElementById('startLearnBtn');
+            const studyStarredBtn = document.getElementById('studyStarredBtn');
+            const shuffleBtn = document.getElementById('shuffleBtn');
+            const autoSpeakToggle = document.getElementById('autoSpeakToggle');
+            
+            const creationSection = document.getElementById('creationSection');
+            const cardListSection = document.getElementById('cardListSection');
+            const learnSection = document.getElementById('learnSection');
+            const exitLearnBtn = document.getElementById('exitLearnBtn');
+
+            const learnContent = document.getElementById('learnContent');
+            const questionText = document.getElementById('questionText');
+            const answerOptions = document.getElementById('answerOptions');
+            const speakBtn = document.getElementById('speakBtn');
+            
+            const feedbackSection = document.getElementById('feedbackSection');
+            const feedbackTitle = document.getElementById('feedbackTitle');
+            const feedbackText = document.getElementById('feedbackText');
+            const nextQuestionBtn = document.getElementById('nextQuestionBtn');
+
+            const summaryScreen = document.getElementById('summaryScreen');
+            const summaryCorrect = document.getElementById('summaryCorrect');
+            const summaryMissed = document.getElementById('summaryMissed');
+            const summaryList = document.getElementById('summaryList');
+            const continueBtn = document.getElementById('continueBtn');
+
+            const completionScreen = document.getElementById('completionScreen');
+            const restartLearnBtn = document.getElementById('restartLearnBtn');
+
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+
+            // --- State Management ---
+            let allSets = {};
+            let activeSetId = null;
+            let femaleVoice = null;
+            let learnSession = {
+                isActive: false,
+                unseen: [],
+                mastered: [],
+                currentQuestion: null,
+                questionsAnsweredInSession: 0,
+                batchHistory: [],
+                studyMode: 'all',
+            };
+
+            // --- Initial Setup ---
+            loadVoices();
+            loadState();
+            
+            // --- Event Listeners ---
+            addSetBtn.addEventListener('click', addNewSet);
+            deleteSetBtn.addEventListener('click', deleteCurrentSet);
+            setSelector.addEventListener('change', (e) => switchActiveSet(e.target.value));
+            cardForm.addEventListener('submit', addCard);
+
+            // --- State & Set Management Functions ---
+            function loadState() {
+                const savedSets = localStorage.getItem('studySets');
+                allSets = savedSets ? JSON.parse(savedSets) : {};
+                activeSetId = localStorage.getItem('activeSetId');
+
+                if (Object.keys(allSets).length === 0) {
+                    // Create a default set if none exist
+                    const defaultId = `set_${Date.now()}`;
+                    allSets[defaultId] = { name: 'My First Set', cards: [] };
+                    activeSetId = defaultId;
+                }
+                
+                if (!activeSetId || !allSets[activeSetId]) {
+                    activeSetId = Object.keys(allSets)[0];
+                }
+
+                saveState();
+                populateSetSelector();
+                renderUIForActiveSet();
+            }
+
+            function saveState() {
+                localStorage.setItem('studySets', JSON.stringify(allSets));
+                localStorage.setItem('activeSetId', activeSetId);
+            }
+
+            function addNewSet() {
+                const name = newSetName.value.trim();
+                if (name) {
+                    const newId = `set_${Date.now()}`;
+                    allSets[newId] = { name: name, cards: [] };
+                    newSetName.value = '';
+                    switchActiveSet(newId);
+                }
+            }
+
+            function deleteCurrentSet() {
+                if (Object.keys(allSets).length > 1) {
+                    delete allSets[activeSetId];
+                    activeSetId = Object.keys(allSets)[0];
+                    switchActiveSet(activeSetId);
+                } else {
+                    alert("You can't delete your only set!");
+                }
+            }
+
+            function switchActiveSet(setId) {
+                activeSetId = setId;
+                saveState();
+                populateSetSelector();
+                renderUIForActiveSet();
+            }
+
+            function populateSetSelector() {
+                setSelector.innerHTML = '';
+                for (const setId in allSets) {
+                    const option = document.createElement('option');
+                    option.value = setId;
+                    option.textContent = allSets[setId].name;
+                    option.selected = setId === activeSetId;
+                    setSelector.appendChild(option);
+                }
+            }
+
+            function renderUIForActiveSet() {
+                if (!activeSetId || !allSets[activeSetId]) return;
+                currentSetName.textContent = allSets[activeSetId].name;
+                renderCardList();
+                updateButtonStates();
+            }
+
+            // --- Card Logic ---
+            function addCard(e) {
+                e.preventDefault();
+                const term = termInput.value.trim();
+                const definition = definitionInput.value.trim();
+
+                if (term && definition) {
+                    const newCard = { id: Date.now(), term, definition, starred: false };
+                    allSets[activeSetId].cards.push(newCard);
+                    saveState();
+                    renderCardList();
+                    updateButtonStates();
+                    termInput.value = '';
+                    definitionInput.value = '';
+                    termInput.focus();
+                }
+            }
+
+            function deleteCard(cardId) {
+                const cards = allSets[activeSetId].cards;
+                allSets[activeSetId].cards = cards.filter(card => card.id !== cardId);
+                saveState();
+                renderCardList();
+                updateButtonStates();
+            }
+
+            function toggleStar(cardId) {
+                const card = allSets[activeSetId].cards.find(c => c.id === cardId);
+                if (card) {
+                    card.starred = !card.starred;
+                    saveState();
+                    renderCardList();
+                    updateButtonStates();
+                }
+            }
+
+            function renderCardList() {
+                cardList.innerHTML = '';
+                const cards = allSets[activeSetId].cards;
+                cards.forEach(card => {
+                    const cardElement = document.createElement('div');
+                    cardElement.className = 'bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex justify-between items-start';
+                    cardElement.innerHTML = `
+                        <div>
+                            <h3 class="font-semibold text-slate-800">${card.term}</h3>
+                            <p class="text-slate-500 text-sm mt-1">${card.definition}</p>
+                        </div>
+                        <div class="flex gap-2">
+                             <button data-id="${card.id}" class="star-btn text-slate-400 hover:text-yellow-400 transition-colors ${card.starred ? 'starred' : ''}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            </button>
+                            <button data-id="${card.id}" class="delete-btn text-slate-400 hover:text-red-500 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                    cardList.appendChild(cardElement);
+                });
+                cardCount.textContent = cards.length;
+
+                document.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', () => deleteCard(Number(b.dataset.id))));
+                document.querySelectorAll('.star-btn').forEach(b => b.addEventListener('click', () => toggleStar(Number(b.dataset.id))));
+            }
+
+            function updateButtonStates() {
+                const cards = allSets[activeSetId].cards;
+                const hasEnoughCards = cards.length >= 2;
+                const hasStarredCards = cards.some(c => c.starred);
+                startLearnBtn.disabled = !hasEnoughCards;
+                shuffleBtn.disabled = !hasEnoughCards;
+                studyStarredBtn.disabled = hasEnoughCards && !hasStarredCards;
+            }
+
+            // --- Learn Mode Logic (largely unchanged, but uses active set) ---
+            startLearnBtn.addEventListener('click', () => startLearnMode('all'));
+            studyStarredBtn.addEventListener('click', () => startLearnMode('starred'));
+            shuffleBtn.addEventListener('click', () => {
+                shuffleArray(allSets[activeSetId].cards);
+                saveState();
+                renderCardList();
+            });
+            exitLearnBtn.addEventListener('click', exitLearnMode);
+            nextQuestionBtn.addEventListener('click', nextQuestion);
+            restartLearnBtn.addEventListener('click', () => startLearnMode(learnSession.studyMode));
+            continueBtn.addEventListener('click', continueLearning);
+            speakBtn.addEventListener('click', () => speak(questionText.textContent));
+
+            function startLearnMode(mode) {
+                learnSession.studyMode = mode;
+                const currentCards = allSets[activeSetId].cards;
+                let cardsToStudy = [];
+
+                if (mode === 'starred') {
+                    cardsToStudy = currentCards.filter(card => card.starred);
+                    if (cardsToStudy.length < 2) { 
+                         alert("You need at least two starred cards to study them.");
+                        return;
+                    }
+                } else {
+                    cardsToStudy = [...currentCards];
+                }
+                
+                document.getElementById('setManagementSection').classList.add('hidden');
+                creationSection.classList.add('hidden');
+                cardListSection.classList.add('hidden');
+                learnSection.classList.remove('hidden');
+                completionScreen.classList.add('hidden');
+                summaryScreen.classList.add('hidden');
+                learnContent.classList.remove('hidden');
+                feedbackSection.classList.add('hidden');
+
+                learnSession.isActive = true;
+                learnSession.unseen = cardsToStudy;
+                learnSession.mastered = [];
+                learnSession.questionsAnsweredInSession = 0;
+                learnSession.batchHistory = [];
+                
+                shuffleArray(learnSession.unseen);
+                nextQuestion();
+            }
+            
+            function exitLearnMode() {
+                learnSection.classList.add('hidden');
+                document.getElementById('setManagementSection').classList.remove('hidden');
+                creationSection.classList.remove('hidden');
+                cardListSection.classList.remove('hidden');
+                learnSession.isActive = false;
+                window.speechSynthesis.cancel();
+            }
+
+            function nextQuestion() {
+                if (learnSession.questionsAnsweredInSession > 0 && learnSession.questionsAnsweredInSession % 10 === 0 && learnSession.batchHistory.length > 0) {
+                    showSummary();
+                    return;
+                }
+                updateProgress();
+                feedbackSection.classList.add('hidden');
+                learnContent.classList.remove('hidden');
+                if (learnSession.unseen.length === 0) {
+                    learnContent.classList.add('hidden');
+                    completionScreen.classList.remove('hidden');
+                    return;
+                }
+                const questionCard = learnSession.unseen[0];
+                learnSession.currentQuestion = questionCard;
+                questionText.textContent = questionCard.definition;
+                if (autoSpeakToggle.checked) {
+                    speak(questionCard.definition);
+                }
+                generateOptions(questionCard);
+            }
+
+            function generateOptions(correctCard) {
+                answerOptions.innerHTML = '';
+                let options = [correctCard];
+                const allCards = allSets[activeSetId].cards;
+                const distractors = allCards.filter(card => card.id !== correctCard.id);
+                shuffleArray(distractors);
+                const numOptions = Math.min(allCards.length, 4);
+                for (let i = 0; i < numOptions - 1; i++) {
+                    if (distractors[i]) options.push(distractors[i]);
+                }
+                shuffleArray(options);
+                options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.className = "w-full text-left p-4 border-2 border-slate-300 rounded-lg hover:bg-slate-100 hover:border-indigo-500 transition";
+                    button.textContent = option.term;
+                    button.dataset.id = option.id;
+                    button.addEventListener('click', handleAnswer);
+                    answerOptions.appendChild(button);
+                });
+            }
+
+            function handleAnswer(e) {
+                const selectedButton = e.target;
+                const selectedId = Number(selectedButton.dataset.id);
+                const correctId = learnSession.currentQuestion.id;
+                const isCorrect = selectedId === correctId;
+                learnSession.questionsAnsweredInSession++;
+                learnSession.batchHistory.push({ card: learnSession.currentQuestion, correct: isCorrect });
+                answerOptions.querySelectorAll('button').forEach(btn => {
+                    btn.disabled = true;
+                    const btnId = Number(btn.dataset.id);
+                    if (btnId === correctId) {
+                        btn.classList.remove('border-slate-300');
+                        btn.classList.add('border-green-500', 'bg-green-50');
+                    } else if (btnId === selectedId) {
+                        btn.classList.remove('border-slate-300');
+                        btn.classList.add('border-red-500', 'bg-red-50');
+                    }
+                });
+                if (isCorrect) {
+                    const masteredCard = learnSession.unseen.shift();
+                    learnSession.mastered.push(masteredCard);
+                    setTimeout(nextQuestion, 800);
+                } else {
+                    showIncorrectFeedback();
+                    const incorrectCard = learnSession.unseen.shift();
+                    learnSession.unseen.push(incorrectCard);
+                }
+            }
+
+            function showIncorrectFeedback() {
+                setTimeout(() => {
+                    learnContent.classList.add('hidden');
+                    feedbackSection.classList.remove('hidden');
+                    feedbackTitle.textContent = "Not quite...";
+                    feedbackTitle.className = "text-xl font-bold text-red-600";
+                    feedbackText.textContent = `The correct term was "${learnSession.currentQuestion.term}". We'll ask this one again later.`;
+                }, 800);
+            }
+
+            function showSummary() {
+                learnContent.classList.add('hidden');
+                feedbackSection.classList.add('hidden');
+                summaryScreen.classList.remove('hidden');
+                const correctCount = learnSession.batchHistory.filter(item => item.correct).length;
+                const missedCount = learnSession.batchHistory.length - correctCount;
+                summaryCorrect.textContent = correctCount;
+                summaryMissed.textContent = missedCount;
+                summaryList.innerHTML = learnSession.batchHistory.map(item => `
+                    <div class="flex justify-between items-center p-2 rounded ${item.correct ? 'bg-green-50' : 'bg-red-50'} my-1">
+                        <div>
+                            <p class="font-medium text-slate-800">${item.card.term}</p>
+                            <p class="text-sm text-slate-500">${item.card.definition}</p>
+                        </div>
+                        ${item.correct ? '<span class="text-green-600 font-semibold">Correct</span>' : '<span class="text-red-600 font-semibold">Missed</span>'}
+                    </div>
+                `).join('');
+            }
+            
+            function continueLearning() {
+                learnSession.batchHistory = [];
+                summaryScreen.classList.add('hidden');
+                nextQuestion();
+            }
+            
+            function updateProgress() {
+                const totalCards = learnSession.unseen.length + learnSession.mastered.length;
+                const masteredCount = learnSession.mastered.length;
+                const progressPercentage = totalCards > 0 ? (masteredCount / totalCards) * 100 : 0;
+                progressBar.style.width = `${progressPercentage}%`;
+                progressText.textContent = `${masteredCount} / ${totalCards}`;
+            }
+
+            // --- Utility Functions ---
+            function loadVoices() {
+                speechSynthesis.onvoiceschanged = () => {
+                    const voices = speechSynthesis.getVoices();
+                    femaleVoice = voices.find(voice => voice.name.includes('Female') && voice.lang.startsWith('en') && voice.name.includes('Google')) ||
+                                  voices.find(voice => voice.name.includes('Female') && voice.lang.startsWith('en')) ||
+                                  voices.find(voice => voice.name.includes('Samantha') || voice.name.includes('Zira')) ||
+                                  null;
+                };
+            }
+
+            function speak(text) {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    if (femaleVoice) {
+                        utterance.voice = femaleVoice;
+                    }
+                    window.speechSynthesis.speak(utterance);
+                } else {
+                    console.log("Text-to-speech not supported in this browser.");
+                }
+            }
+
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+        });
+    </script>
+</body>
+</html>
